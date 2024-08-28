@@ -19,6 +19,7 @@ for i in range(len(csv)):
         os.makedirs(os.path.join('ImageFolder','class'+str(breed)))
     os.system('cp '+frompath+' '+topath)
 
+
 # from torchvision import datasets, transforms
 # from torch.utils.data import DataLoader
 
