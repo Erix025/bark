@@ -1,8 +1,10 @@
 Data:
-  data_path: 'train/train'
-  label_path: 'labels.csv'
+  train_path: 'data/train/train'
+  test_path: 'data/test/test'
+  label_path: 'data/labels.csv'
   shuffle: True
-  num_classes: 10
+  train_samples: 10
+  test_samples: 10
 
 Optimization:
   epochs: 10

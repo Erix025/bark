@@ -5,8 +5,8 @@ import os
 from tqdm import tqdm
 from utils.image_utils import resize_image
 
-class MyDataSet(Dataset):
-    def __init__(self, data_path, label_path, num_classes=None):
+class TrainDataset(Dataset):
+    def __init__(self, data_path, label_path, num_samples=None):
         # load label map from csv file, skip the first line
         self.label_map = {}
         with open(label_path, 'r') as f:
@@ -26,9 +26,9 @@ class MyDataSet(Dataset):
         data = []
         label = []
 
-        num_classes = len(os.listdir(data_path)) if num_classes is None else num_classes
+        num_samples = len(os.listdir(data_path)) if num_samples is None else num_samples
         # Iterate over all files in the data_path directory
-        for file_name in tqdm(os.listdir(data_path)[:num_classes]):
+        for file_name in tqdm(os.listdir(data_path)[:num_samples]):
             # Check if the file is a jpg file
             if file_name.endswith(".jpg"):
                 # Open the image file
@@ -55,8 +55,29 @@ class MyDataSet(Dataset):
     
     def __getitem__(self, idx):
         return self.data[idx], self.label[idx]
+
+class TestDataset(Dataset):
+    def __init__(self, data_path, num_samples=None):
+        data = []
+        id = []
+        num_samples = len(os.listdir(data_path)) if num_samples is None else num_samples
+        for file_name in tqdm(os.listdir(data_path)[:num_samples]):
+            if file_name.endswith(".jpg"):
+                image = Image.open(os.path.join(data_path, file_name))
+                image = resize_image(image, 400, 400)
+                tensor = torch.Tensor(image.getdata()).view(image.size[1], image.size[0], 3)
+                data.append(tensor)
+                id.append(file_name[:-4])
+        self.data = torch.stack(data)
+        self.id = id
     
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, idx):
+        return self.id[idx], self.data[idx]
+
 class MyDataLoader(DataLoader):
-    def __init__(self, data_path, label_path, batch_size, shuffle, num_classes=None):
-        self.dataset = MyDataSet(data_path, label_path, num_classes)
+    def __init__(self, dataset, batch_size, shuffle):
+        self.dataset = dataset
         super(MyDataLoader, self).__init__(self.dataset, batch_size, shuffle)
