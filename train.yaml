@@ -1,0 +1,10 @@
+Data:
+  data_path: 'train/train'
+  label_path: 'labels.csv'
+  shuffle: True
+  num_classes: 10
+
+Optimization:
+  epochs: 10
+  batch_size: 32
+  lr: 0.001
