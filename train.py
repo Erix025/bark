@@ -1,104 +1,67 @@
-import torch
-from torch.utils.data import Dataset, DataLoader
 import os
-from PIL import Image
-from tqdm import tqdm
-from torch import nn
+from datetime import datetime
+import torch
 
-def resize_image(image : Image.Image, height, width):
-    rate = min(height / image.size[1], width / image.size[0])
-    new_size = (int(image.size[0] * rate), int(image.size[1] * rate))
-    # pad the image to the target size
-    image = image.resize(new_size)
-    new_image = Image.new("RGB", (width, height))
-    new_image.paste(image, ((width - new_size[0]) // 2, (height - new_size[1]) // 2))
-    return new_image
+def train(
+    model, 
+    optimizer, 
+    criterion, 
+    train_loader, 
+    valid_loader, 
+    epochs, 
+    device,
+    checkpoint_path='checkpoints'):
+    # create checkpoints folder
+    os.makedirs(checkpoint_path, exist_ok=True)
+    os.makedirs('log', exist_ok=True)
+    log_file = f'log/{datetime.now()}.log'
+    try:
+        for epoch in range(epochs):
+            model.train()  # 设置模型为训练模式
+            for i, (images, labels) in enumerate(train_loader):
+                images, labels = images.to(device), labels.to(device)  # 将数据移动到GPU
+                optimizer.zero_grad()
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-class MyDataSet(Dataset):
-    def __init__(self, data_path, label_path, num_classes=None):
-        # load label map from csv file, skip the first line
-        self.label_map = {}
-        with open(label_path, 'r') as f:
-            for line in f.readlines()[1:]:
-                line = line.strip().split(',')
-                self.label_map[line[0]] = line[1]
-                
-        # get all unique labels and map them to index
-        label_index_map = {}
-        for label in self.label_map.values():
-            if label not in label_index_map:
-                label_index_map[label] = len(label_index_map)
+                if i % 10 == 0:
+                    print(f'Epoch [{epoch + 1}/{epochs}], Step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}')
+                    with open(log_file, 'a') as f:
+                        f.write(f'Epoch [{epoch + 1}/{epochs}], Step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}\n')
+            # 每隔几个 epoch 进行一次验证（例如每个 epoch 验证一次）
+            if (epoch + 1) % 1 == 0:
+                model.eval()  # 设置模型为评估模式
+                val_loss = 0.0
+                correct = 0
+                total = 0
 
-        self.label_map = {k: label_index_map[v] for k, v in self.label_map.items()}
-        
-        # load data
-        data = []
-        label = []
+                with torch.no_grad():  # 关闭梯度计算
+                    for images, labels in valid_loader:
+                        images, labels = images.to(device), labels.to(device)
+                        outputs = model(images)
+                        loss = criterion(outputs, labels)
+                        val_loss += loss.item()
+                        _, predicted = torch.max(outputs, 1)
+                        total += labels.size(0)
+                        correct += (predicted == labels).sum().item()
 
-        num_classes = len(os.listdir(data_path)) if num_classes is None else num_classes
-        # Iterate over all files in the data_path directory
-        for file_name in tqdm(os.listdir(data_path)[:num_classes]):
-            # Check if the file is a jpg file
-            if file_name.endswith(".jpg"):
-                # Open the image file
-                image = Image.open(os.path.join(data_path, file_name))
-                image = resize_image(image, 400, 400)
-                # Convert the image to a tensor
-                tensor = torch.Tensor(image.getdata()).view(image.size[1], image.size[0], 3)
-                # Append the tensor to the data list
-                data.append(tensor)
-                # Append a label for this image
-                label.append(self.label_map[file_name[:-4]])
+                val_loss /= len(valid_loader)
+                val_accuracy = correct / total
 
-        # Convert the data and label lists to tensors
-        data = torch.stack(data)
-        label = torch.tensor(label)
+                print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
+                with open(log_file, 'a') as f:
+                    f.write(f'Epoch [{epoch + 1}/{epochs}], Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}\n')
+                # 保存最新的模型检查点
+                checkpoint_filename = f'{checkpoint_path}/model_epoch_{epoch + 1}.ckpt'
+                torch.save(model.state_dict(), checkpoint_filename)
+                print(f'Saved checkpoint: {checkpoint_filename}')
 
-        # Assign the data and label tensors to the corresponding attributes of the dataset
-        self.data = data
-        self.label = label
-        
-    
-    def __len__(self):
-        return len(self.data)
-    
-    def __getitem__(self, idx):
-        return self.data[idx], self.label[idx]
-    
-class MyDataLoader(DataLoader):
-    def __init__(self, data_path, label_path, batch_size, shuffle, num_classes=None):
-        self.dataset = MyDataSet(data_path, label_path, num_classes)
-        super(MyDataLoader, self).__init__(self.dataset, batch_size, shuffle)
-        
-class MyModel(torch.nn.Module):
-    def __init__(self):
-        super(MyModel, self).__init__()
-        self.linear1 = nn.Linear(400*400*3, 1200)
-        self.linear2 = nn.Linear(1200, 120)
-    
-    def forward(self, x):
-        x = torch.flatten(x, 1)
-        x = self.linear1(x)
-        x = torch.relu(x)
-        x = self.linear2(x)
-        return x
-    
-def train(epochs, batch_size, lr, data_path, label_path, shuffle, num_classes=None):
-    train_loader = MyDataLoader(data_path, label_path, batch_size, shuffle, num_classes)
-    model = MyModel()
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    
-    for epoch in range(epochs):
-        for i, (data, label) in enumerate(train_loader):
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, label)
-            loss.backward()
-            optimizer.step()
-            
-            if i % 100 == 0:
-                print('Epoch: {}, Iter: {}, Loss: {}'.format(epoch, i, loss.item()))
-                
-if __name__ == '__main__':
-    train(epochs=10, batch_size=32, lr=0.001, data_path='data/train/train', label_path='data/labels.csv', shuffle=True, num_classes=10)
+    except KeyboardInterrupt:
+        print('Training interrupted, saving checkpoint...')
+        torch.save(model.state_dict(), 'checkpoints/model_interrupt.ckpt')
+
+    # 保存最终模型
+    torch.save(model.state_dict(), 'checkpoints/model_final.ckpt')
+    print('Finished Training')

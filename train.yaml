@@ -1,0 +1,11 @@
+Data:
+  dataset: 'data/ImageFolder'
+  batch_size: 256
+  train_size_ratio: 0.8
+
+Train:
+  model: 'efficient_net'
+  epochs: 10
+  lr: 0.001
+  weight_decay: 0.0001
+  checkpoint_dir: 'checkpoints/efficient_net'
