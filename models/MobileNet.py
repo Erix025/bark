@@ -1,13 +1,25 @@
 import torch.nn as nn
 import torchvision.models as models
 
-class MobileNet(nn.Module):
+class MobileNetV2(nn.Module):
     def __init__(self, num_classes, device, pretrained=True):
-        super(MobileNet, self).__init__()
-        self.model = models.mobilenet_v2(pretrained=pretrained)
+        super(MobileNetV2, self).__init__()
+        self.model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.DEFAULT if pretrained else None)
         in_features = self.model.classifier[1].in_features
-        self.model.classifier[1] = nn.Linear(in_features, num_classes)
-        
+        self.model.classifier[1] = nn.Sequential(
+            nn.Linear(in_features, num_classes),
+        )
+        self.model = self.model.to(device)
+    
+    def forward(self, x):
+        return self.model(x)
+    
+class MobileNetV3(nn.Module):
+    def __init__(self, num_classes, device, pretrained=True):
+        super(MobileNetV3, self).__init__()
+        self.model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.DEFAULT if pretrained else None)
+        in_features = self.model.classifier[3].in_features
+        self.model.classifier[3] = nn.Linear(in_features, num_classes)
         self.model = self.model.to(device)
     
     def forward(self, x):

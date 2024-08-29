@@ -6,7 +6,8 @@ from .MobileNet import *
 MODEL_MAP = {
     'vit': ViTModel,
     'efficient_net': EfficientNet,
-    'mobile_net': MobileNet
+    'mobile_net_v2': MobileNetV2,
+    'mobile_net_v3': MobileNetV3
 }
 
 def get_model(model_name, num_classes, device, pretrained=True):
