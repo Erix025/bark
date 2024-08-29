@@ -1,7 +1,5 @@
 Data:
-  train_path: 'data/train/train'
-  test_path: 'data/test/test'
-  label_path: 'data/labels.csv'
+  dataset: 'data/ImageFolder'
   shuffle: True
   train_samples: 10
   test_samples: 10

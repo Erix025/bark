@@ -1,2 +1,3 @@
 data
+!data/data_classifier.py
 *.pyc
