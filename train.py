@@ -10,6 +10,8 @@ import sys
 from utils.data import MyDataLoader, TrainDataset, TestDataset
 from utils.model import Linear_nn as Model
 from models import ViTModel
+import os
+from datetime import datetime
 
 def train(
     model, 
@@ -18,8 +20,11 @@ def train(
     train_loader, 
     valid_loader, 
     epochs, 
-    device='cpu',
+    device,
     checkpoint_path='checkpoints'):
+    # create checkpoints folder
+    os.makedirs(checkpoint_path, exist_ok=True)
+    
     try:
         for epoch in range(epochs):
             model.train()  # 设置模型为训练模式
@@ -56,7 +61,8 @@ def train(
                 val_accuracy = correct / total
 
                 print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
-                with open('log.txt', 'a') as f:
+                os.makedirs('log', exist_ok=True)
+                with open(f'log/{datetime.now()}.log', 'a') as f:
                     f.write(f'Epoch [{epoch + 1}/{epochs}], Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}\n')
                 # 保存最新的模型检查点
                 checkpoint_filename = f'{checkpoint_path}/model_epoch_{epoch + 1}.ckpt'
@@ -90,7 +96,7 @@ if __name__ == '__main__':
     opt_cfg = config.Optimization
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+    print(f'Using device: {device}')
     model = ViTModel(num_classes=120, device=device, pretrained=True)
     
     transform = transforms.Compose([

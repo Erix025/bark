@@ -1,3 +1,5 @@
-data
+data/*
+checkpoints/*
+log/*
 !data/data_classifier.py
 *.pyc

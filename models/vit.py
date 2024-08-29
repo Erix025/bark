@@ -10,6 +10,8 @@ class ViTModel(nn.Module):
         super(ViTModel, self).__init__()
         self.model = models.vit_b_16(pretrained=pretrained)
         self.model.heads.head = nn.Linear(self.model.heads.head.in_features, num_classes)
+        
+        self.model = self.model.to(device)
     
     def forward(self, x):
         return self.model(x)
