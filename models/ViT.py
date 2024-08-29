@@ -1,8 +1,4 @@
-import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-from torch.utils.data import DataLoader, random_split
 import torchvision.models as models
 
 class ViTModel(nn.Module):

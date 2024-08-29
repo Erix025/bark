@@ -1,10 +1,11 @@
 Data:
   dataset: 'data/ImageFolder'
-  shuffle: True
-  train_samples: 10
-  test_samples: 10
+  batch_size: 256
+  train_size_ratio: 0.8
 
-Optimization:
+Train:
+  model: 'efficient_net'
   epochs: 10
-  batch_size: 32
   lr: 0.001
+  weight_decay: 0.0001
+  checkpoint_dir: 'checkpoints/efficient_net'
