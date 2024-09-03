@@ -13,8 +13,8 @@ print(labels)
 for i in range(len(csv)):
     line = csv.iloc[i]
     breed = labels2num[line['breed']]
-    frompath = os.path.join('train/train',line['id']+'.jpg')
-    topath = os.path.join('ImageFolder','class'+str(breed),line['id']+'.jpg')
+    frompath = os.path.join('train/train',line['id']+'.png')
+    topath = os.path.join('ImageFolder','class'+str(breed),line['id']+'.png')
     if not os.path.exists(os.path.join('ImageFolder','class'+str(breed))):
         os.makedirs(os.path.join('ImageFolder','class'+str(breed)))
     os.system('cp '+frompath+' '+topath)

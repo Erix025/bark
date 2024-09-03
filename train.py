@@ -10,26 +10,28 @@ def train(
     valid_loader, 
     epochs, 
     device,
-    checkpoint_path='checkpoints'):
+    checkpoint_path='checkpoints',
+    validate_only=False):
     # create checkpoints folder
     os.makedirs(checkpoint_path, exist_ok=True)
     os.makedirs('log', exist_ok=True)
     log_file = f'log/{datetime.now()}.log'
     try:
         for epoch in range(epochs):
-            model.train()  # 设置模型为训练模式
-            for i, (images, labels) in enumerate(train_loader):
-                images, labels = images.to(device), labels.to(device)  # 将数据移动到GPU
-                optimizer.zero_grad()
-                outputs = model(images)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
+            if not validate_only:
+                model.train()  # 设置模型为训练模式
+                for i, (images, labels) in enumerate(train_loader):
+                    images, labels = images.to(device), labels.to(device)  # 将数据移动到GPU
+                    optimizer.zero_grad()
+                    outputs = model(images)
+                    loss = criterion(outputs, labels)
+                    loss.backward()
+                    optimizer.step()
 
-                if i % 10 == 0:
-                    print(f'Epoch [{epoch + 1}/{epochs}], Step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}')
-                    with open(log_file, 'a') as f:
-                        f.write(f'Epoch [{epoch + 1}/{epochs}], Step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}\n')
+                    if i % 10 == 0:
+                        print(f'Epoch [{epoch + 1}/{epochs}], Step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}')
+                        with open(log_file, 'a') as f:
+                            f.write(f'Epoch [{epoch + 1}/{epochs}], Step [{i + 1}/{len(train_loader)}], Loss: {loss.item():.4f}\n')
             # 每隔几个 epoch 进行一次验证（例如每个 epoch 验证一次）
             if (epoch + 1) % 1 == 0:
                 model.eval()  # 设置模型为评估模式
@@ -54,14 +56,18 @@ def train(
                 with open(log_file, 'a') as f:
                     f.write(f'Epoch [{epoch + 1}/{epochs}], Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}\n')
                 # 保存最新的模型检查点
-                checkpoint_filename = f'{checkpoint_path}/model_epoch_{epoch + 1}.ckpt'
-                torch.save(model.state_dict(), checkpoint_filename)
-                print(f'Saved checkpoint: {checkpoint_filename}')
+                if not validate_only:
+                    checkpoint_filename = f'{checkpoint_path}/model_epoch_{epoch + 1}.ckpt'
+                    torch.save(model.state_dict(), checkpoint_filename)
+                    print(f'Saved checkpoint: {checkpoint_filename}')
+            if validate_only:
+                break
 
     except KeyboardInterrupt:
         print('Training interrupted, saving checkpoint...')
         torch.save(model.state_dict(), 'checkpoints/model_interrupt.ckpt')
 
     # 保存最终模型
-    torch.save(model.state_dict(), 'checkpoints/model_final.ckpt')
-    print('Finished Training')
+    if not validate_only:
+        torch.save(model.state_dict(), 'checkpoints/model_final.ckpt')
+        print('Finished Training')
