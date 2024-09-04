@@ -10,6 +10,7 @@ from models import get_model
 from train import train
 from evaluate import evaluate, InferLoader
 import os
+from datetime import datetime
 
 if __name__ == '__main__':
     # Parse arguments
@@ -21,6 +22,10 @@ if __name__ == '__main__':
     data_cfg = config.Data
     train_cfg = config.Train
     test_cfg = config.Test
+    # backup config
+    backup_dir = os.path.join(train_cfg.checkpoint_dir, str(datetime.now()))
+    os.makedirs(backup_dir, exist_ok=True)
+    OmegaConf.save(config, os.path.join(backup_dir, "config.yaml"))
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
@@ -70,5 +75,6 @@ if __name__ == '__main__':
             epochs=train_cfg.epochs,
             device=device,
             checkpoint_path=train_cfg.checkpoint_dir,
-            validate_only=test_cfg.validate_only
+            validate_only=test_cfg.validate_only,
+            backup_dir=backup_dir
         )
