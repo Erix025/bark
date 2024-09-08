@@ -1,5 +1,7 @@
 data/*
 checkpoints/*
 log/*
-!data/data_classifier.py
+!data/*.py
+!data/labels_test_finetuned.csv
+lightning_logs/*
 *.pyc
