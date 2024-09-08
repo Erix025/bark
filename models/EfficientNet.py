@@ -8,6 +8,11 @@ class EfficientNet(nn.Module):
         in_features = self.model.classifier[1].in_features
         self.model.classifier[1] = nn.Linear(in_features, num_classes)
         
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.classifier[1].parameters():
+            param.requires_grad = True
+        
         self.model = self.model.to(device)
     
     def forward(self, x):

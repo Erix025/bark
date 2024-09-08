@@ -5,13 +5,12 @@ Data:
   train_size_ratio: 0.8
 
 Train:
-  model: 'resnet152'
+  model: 'eva02'
   epochs: 6
   lr: 0.001
   weight_decay: 0.01
-  checkpoint_dir: 'checkpoints/resnet152'
+  checkpoint_dir: 'checkpoints/eva02'
 
 Test:
   checkpoint_path: 'checkpoints/model_final.ckpt'
-  validate_only: False
-  inference_only: False
+  inference: False

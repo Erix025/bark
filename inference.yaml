@@ -13,5 +13,4 @@ Train:
 
 Test:
   checkpoint_path: 'checkpoints/model_final.ckpt'
-  validate_only: False
-  inference_only: True
+  inference: True

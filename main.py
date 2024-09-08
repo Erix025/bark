@@ -32,7 +32,7 @@ if __name__ == '__main__':
     model = get_model(model_name=train_cfg.model, num_classes=120, device=device, pretrained=True)
 
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),  # 调整图像大小
+        transforms.Resize((448, 448)),  # 调整图像大小
         transforms.ToTensor(),          # 将图像转换为 Tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # 标准化
     ])
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     train_path = os.path.join(data_cfg.train_dataset)
     infer_path = os.path.join(data_cfg.infer_dataset)
 
-    if test_cfg.inference_only:
+    if test_cfg.inference:
         dataset = InferLoader(root=infer_path, transform=transform)
     else:
         dataset = datasets.ImageFolder(root=train_path, transform=transform)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     train_size = int(data_cfg.train_size_ratio * len(dataset))
     valid_size = len(dataset) - train_size
     # 随机划分数据集
-    if test_cfg.inference_only:
+    if test_cfg.inference:
         valid_loader = DataLoader(dataset, batch_size=data_cfg.batch_size, shuffle=False)
     else:
         train_dataset, valid_dataset = random_split(dataset, [train_size, valid_size])
@@ -59,11 +59,11 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=train_cfg.lr, weight_decay=train_cfg.weight_decay)
 
-    if test_cfg.inference_only or test_cfg.validate_only:
+    if test_cfg.inference:
         print("Using checkpoint: ", test_cfg.checkpoint_path)
         model.load_state_dict(torch.load(test_cfg.checkpoint_path, weights_only=True))
 
-    if test_cfg.inference_only:
+    if test_cfg.inference:
         evaluate(model, valid_loader, device=device)
     else:
         train(
@@ -75,6 +75,5 @@ if __name__ == '__main__':
             epochs=train_cfg.epochs,
             device=device,
             checkpoint_path=train_cfg.checkpoint_dir,
-            validate_only=test_cfg.validate_only,
             backup_dir=backup_dir
         )

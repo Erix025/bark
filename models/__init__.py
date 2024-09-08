@@ -3,6 +3,7 @@ from .ViT import *
 from .EfficientNet import *
 from .MobileNet import *
 from .ResNet import *
+from .EVA import *
 MODEL_MAP = {
     'vit': ViTModel,
     'efficient_net': EfficientNet,
@@ -12,6 +13,7 @@ MODEL_MAP = {
     'resnet101': ResNet101,
     'resnet50': ResNet50,
     'resnet18': ResNet18,
+    'eva02': EVA02,
 }
 
 def get_model(model_name, num_classes, device, pretrained=True):

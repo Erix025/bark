@@ -9,6 +9,11 @@ class MobileNetV2(nn.Module):
         self.model.classifier[1] = nn.Sequential(
             nn.Linear(in_features, num_classes),
         )
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.classifier[1].parameters():
+            param.requires_grad = True
+        
         self.model = self.model.to(device)
     
     def forward(self, x):
@@ -21,6 +26,11 @@ class MobileNetV3(nn.Module):
         in_features = self.model.classifier[3].in_features
         self.model.classifier[3] = nn.Linear(in_features, num_classes)
         self.model = self.model.to(device)
+        
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.classifier[3].parameters():
+            param.requires_grad = True
     
     def forward(self, x):
         return self.model(x)
